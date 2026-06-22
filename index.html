@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>HIDRONOVA PRO — Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#08111f;--bg2:#0e1d38;--bg3:#132039;--border:#1a2f50;--accent:#1d4ed8;--accent2:#3b82f6;--text:#e2e8f0;--muted:#64748b;--dim:#334155}
+body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.header{background:linear-gradient(135deg,#0c2347,#163a70);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid var(--accent);box-shadow:0 4px 24px rgba(29,78,216,.3)}
+.hl{display:flex;align-items:center;gap:12px}
+.logo{font-size:28px}
+.ht h1{font-size:20px;font-weight:700;color:#60a5fa;letter-spacing:1px}
+.ht p{font-size:10px;color:var(--muted);margin-top:2px}
+.hbadge{background:#1e3a5f;border:1px solid var(--accent2);border-radius:20px;padding:4px 14px;font-size:11px;color:#60a5fa}
+.update-info{font-size:10px;color:var(--dim);text-align:right;line-height:1.5}
+.config-btn{background:#1e3a5f;border:1px solid var(--accent2);color:#60a5fa;padding:7px 16px;border-radius:8px;font-size:12px;cursor:pointer;font-weight:600;transition:all .2s}
+.config-btn:hover{background:var(--accent);color:#fff}
+.filters{background:#0c1a30;padding:9px 24px;display:flex;gap:7px;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--border)}
+.filters label{font-size:10px;color:var(--dim);font-weight:700;letter-spacing:.5px;margin-right:3px}
+.fb{background:var(--bg3);border:1px solid var(--border);color:var(--muted);padding:4px 13px;border-radius:14px;font-size:11px;cursor:pointer;transition:all .2s}
+.fb:hover,.fb.act{background:var(--accent);border-color:var(--accent2);color:#fff}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;opacity:0;pointer-events:none;transition:opacity .3s}
+.overlay.open{opacity:1;pointer-events:all}
+.cpanel{position:fixed;right:-420px;top:0;width:400px;height:100vh;background:#0c1a30;border-left:1px solid var(--border);z-index:1000;transition:right .3s;display:flex;flex-direction:column;box-shadow:-8px 0 40px rgba(0,0,0,.5)}
+.cpanel.open{right:0}
+.cphead{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.cphead h2{font-size:15px;font-weight:700;color:#60a5fa}
+.close-btn{background:var(--bg3);border:1px solid var(--border);color:var(--muted);width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:16px}
+.close-btn:hover{background:#ef4444;color:#fff;border-color:#ef4444}
+.cpbody{flex:1;overflow-y:auto;padding:16px 20px}
+.cp-section{margin-bottom:22px}
+.cp-section-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #0a1422}
+.toggle-row:last-child{border-bottom:none}
+.toggle-info{display:flex;flex-direction:column;gap:2px}
+.toggle-label{font-size:12px;color:var(--text);font-weight:500}
+.toggle-sub{font-size:10px;color:var(--muted)}
+.toggle-right{display:flex;align-items:center;gap:10px}
+.switch{position:relative;display:inline-block;width:36px;height:20px;flex-shrink:0}
+.switch input{opacity:0;width:0;height:0}
+.slider{position:absolute;inset:0;background:#1e3a5f;border-radius:20px;cursor:pointer;transition:.2s;border:1px solid var(--border)}
+.slider:before{content:'';position:absolute;height:14px;width:14px;left:2px;top:2px;background:var(--muted);border-radius:50%;transition:.2s}
+input:checked+.slider{background:var(--accent);border-color:var(--accent2)}
+input:checked+.slider:before{transform:translateX(16px);background:#fff}
+.ctype-sel{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:3px 8px;border-radius:6px;font-size:10px;cursor:pointer;outline:none}
+.themes{display:flex;gap:8px;flex-wrap:wrap}
+.theme-btn{width:32px;height:32px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .2s}
+.theme-btn.selected{border-color:#fff;transform:scale(1.15)}
+.reset-btn{width:100%;padding:10px;background:var(--bg3);border:1px solid var(--border);color:var(--muted);border-radius:8px;font-size:12px;cursor:pointer;margin-top:8px}
+.reset-btn:hover{background:#1e3a5f;color:var(--text)}
+.saved-toast{position:fixed;bottom:24px;right:24px;background:#10b981;color:#fff;padding:10px 20px;border-radius:8px;font-size:12px;font-weight:600;z-index:2000;transform:translateY(60px);opacity:0;transition:all .3s}
+.saved-toast.show{transform:translateY(0);opacity:1}
+.main{padding:16px 24px}
+.sec{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--dim);margin:18px 0 10px;padding-left:10px;border-left:3px solid var(--accent)}
+.kgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:11px;margin-bottom:16px}
+.kcard{background:var(--bg2);border:1px solid var(--border);border-radius:11px;padding:14px;position:relative;overflow:hidden;transition:transform .2s}
+.kcard:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(0,0,0,.4)}
+.kcard::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:11px 11px 0 0}
+.kcard.gr::before{background:linear-gradient(90deg,#10b981,#34d399)}
+.kcard.rd::before{background:linear-gradient(90deg,#ef4444,#f87171)}
+.kcard.bl::before{background:linear-gradient(90deg,#3b82f6,#60a5fa)}
+.kcard.yl::before{background:linear-gradient(90deg,#f59e0b,#fbbf24)}
+.kcard.pu::before{background:linear-gradient(90deg,#8b5cf6,#a78bfa)}
+.kcard.cy::before{background:linear-gradient(90deg,#06b6d4,#22d3ee)}
+.kcard.or::before{background:linear-gradient(90deg,#f97316,#fb923c)}
+.klabel{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px}
+.kval{font-size:20px;font-weight:700;line-height:1}
+.kval.gr{color:#34d399}.kval.rd{color:#f87171}.kval.yl{color:#fbbf24}.kval.cy{color:#22d3ee}.kval.pu{color:#a78bfa}
+.ksub{font-size:10px;color:var(--dim);margin-top:5px}
+.kico{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:24px;opacity:.1}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px}
+.g21{display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:12px}
+.full{margin-bottom:12px}
+.cc{background:var(--bg2);border:1px solid var(--border);border-radius:11px;padding:15px}
+.cc h3{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:11px;display:flex;align-items:center;gap:6px}
+.cc h3 em{font-style:normal;font-size:13px}
+.tc{background:var(--bg2);border:1px solid var(--border);border-radius:11px;padding:15px;margin-bottom:12px}
+.tc h3{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:11px;display:flex;align-items:center;gap:6px}
+.tc h3 em{font-style:normal;font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{padding:6px 8px;text-align:left;color:var(--dim);font-weight:700;font-size:9px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
+td{padding:6px 8px;border-bottom:1px solid #0a1422;color:#94a3b8}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg3)}
+.bd{display:inline-block;padding:2px 7px;border-radius:9px;font-size:9px;font-weight:700}
+.brd{background:#3f0e0e;color:#f87171;border:1px solid #7f1d1d}
+.bgr{background:#0c2d1e;color:#34d399;border:1px solid #065f46}
+.byl{background:#2d1f05;color:#fbbf24;border:1px solid #78350f}
+.bbl{background:#0c1e3f;color:#60a5fa;border:1px solid #1e3a8a}
+.nota{font-size:9px;color:var(--dim);margin-top:6px;font-style:italic}
+.hidden-section{display:none}
+</style>
+</head>
+<body>
+<div class="overlay" id="overlay" onclick="closePanel()"></div>
+<div class="cpanel" id="cpanel">
+  <div class="cphead"><h2>⚙️ Configurar Dashboard</h2><button class="close-btn" onclick="closePanel()">✕</button></div>
+  <div class="cpbody">
+    <div class="cp-section"><div class="cp-section-title">📊 Secciones Visibles</div><div id="section-toggles"></div></div>
+    <div class="cp-section"><div class="cp-section-title">📈 Tipo de Gráfico</div><div id="chart-type-rows"></div></div>
+    <div class="cp-section"><div class="cp-section-title">🎨 Color de Acento</div>
+      <div class="themes">
+        <div class="theme-btn" style="background:linear-gradient(135deg,#1d4ed8,#3b82f6)" data-theme="blue" onclick="setTheme('blue',this)"></div>
+        <div class="theme-btn" style="background:linear-gradient(135deg,#059669,#10b981)" data-theme="green" onclick="setTheme('green',this)"></div>
+        <div class="theme-btn" style="background:linear-gradient(135deg,#7c3aed,#8b5cf6)" data-theme="purple" onclick="setTheme('purple',this)"></div>
+        <div class="theme-btn" style="background:linear-gradient(135deg,#dc2626,#ef4444)" data-theme="red" onclick="setTheme('red',this)"></div>
+        <div class="theme-btn" style="background:linear-gradient(135deg,#0891b2,#06b6d4)" data-theme="cyan" onclick="setTheme('cyan',this)"></div>
+      </div>
+    </div>
+    <div class="cp-section"><div class="cp-section-title">🔢 KPIs Visibles</div><div id="kpi-toggles"></div></div>
+    <button class="reset-btn" onclick="resetConfig()">🔄 Restaurar por defecto</button>
+  </div>
+</div>
+<div class="header">
+  <div class="hl"><div class="logo">💧</div><div class="ht"><h1>HIDRONOVA PRO</h1><p>Dashboard de Monitoreo · Transporte de Agua · MAA2686</p></div></div>
+  <div style="display:flex;gap:10px;align-items:center">
+    <div class="update-info">Última actualización:<br><strong>22/06/2026 18:17</strong></div>
+    <div class="hbadge" id="periodLabel">Todos los períodos</div>
+    <button class="config-btn" onclick="openPanel()">⚙️ Configurar</button>
+  </div>
+</div>
+<div class="filters">
+  <label>PERÍODO:</label>
+  <button class="fb act" onclick="setF('all',this)">Todo</button>
+  <button class="fb" onclick="setF('2026',this)">2026</button>
+  <button class="fb" onclick="setF('2025',this)">2025</button>
+  <button class="fb" onclick="setF('2026-06',this)">Jun 26</button>
+  <button class="fb" onclick="setF('2026-05',this)">May 26</button>
+  <button class="fb" onclick="setF('2026-04',this)">Apr 26</button>
+  <button class="fb" onclick="setF('2026-03',this)">Mar 26</button>
+  <button class="fb" onclick="setF('2026-02',this)">Feb 26</button>
+  <button class="fb" onclick="setF('2026-01',this)">Jan 26</button>
+  <button class="fb" onclick="setF('2025-12',this)">Dec 25</button>
+  <button class="fb" onclick="setF('2025-11',this)">Nov 25</button>
+  
+</div>
+<div class="main">
+<div class="section-wrap" id="sec-kpis"><div class="kgrid">
+  <div class="kcard gr" id="kpi-ingresos"><div class="klabel">Ingresos Viajes</div><div class="kval gr" id="k-ing">$0</div><div class="ksub" id="k-ing-s">—</div><div class="kico">💵</div></div>
+  <div class="kcard rd" id="kpi-egresos"><div class="klabel">Egresos</div><div class="kval rd" id="k-eg">$0</div><div class="ksub">gastos del período</div><div class="kico">📤</div></div>
+  <div class="kcard bl" id="kpi-balance"><div class="klabel">Balance Neto</div><div class="kval" id="k-bal">$0</div><div class="ksub">ingresos − egresos</div><div class="kico">⚖️</div></div>
+  <div class="kcard cy" id="kpi-km"><div class="klabel">KM Recorridos</div><div class="kval cy" id="k-km">0</div><div class="ksub">kilómetros estimados</div><div class="kico">🛣️</div></div>
+  <div class="kcard yl" id="kpi-diesel"><div class="klabel">Diesel Consumido</div><div class="kval yl" id="k-gal">0</div><div class="ksub" id="k-gal-s">galones</div><div class="kico">⛽</div></div>
+  <div class="kcard pu" id="kpi-viajes"><div class="klabel">Viajes Realizados</div><div class="kval pu" id="k-vj">0</div><div class="ksub" id="k-vj-s">—</div><div class="kico">🚛</div></div>
+  <div class="kcard or" id="kpi-cxc"><div class="klabel">Cuentas por Cobrar</div><div class="kval" id="k-cxc">$0</div><div class="ksub" id="k-cxc-s">—</div><div class="kico">📋</div></div>
+</div></div>
+<div class="section-wrap" id="sec-ingeg"><div class="sec">📊 Ingresos vs Egresos</div><div class="full cc"><h3><em>📊</em> Ingresos vs Egresos por Mes</h3><canvas id="cIngEg" height="70"></canvas></div></div>
+<div class="section-wrap" id="sec-ops"><div class="sec">🚛 Operaciones</div><div class="g3">
+  <div class="cc"><h3><em>🚛</em> Viajes por Mes</h3><canvas id="cViajes" height="150"></canvas></div>
+  <div class="cc"><h3><em>🛣️</em> KM Recorridos</h3><canvas id="cKm" height="150"></canvas></div>
+  <div class="cc"><h3><em>📈</em> Balance Neto</h3><canvas id="cBalance" height="150"></canvas></div>
+</div></div>
+<div class="section-wrap" id="sec-comb"><div class="sec">⛽ Combustible</div><div class="g2">
+  <div class="cc"><h3><em>⛽</em> Galones Diesel por Mes</h3><canvas id="cGal" height="130"></canvas></div>
+  <div class="cc"><h3><em>💲</em> Costo Combustible ($)</h3><canvas id="cCombCosto" height="130"></canvas></div>
+</div></div>
+<div class="section-wrap" id="sec-clientes"><div class="sec">🏭 Clientes y Fuentes de Agua</div><div class="g21">
+  <div class="cc"><h3><em>🏭</em> Ingresos por Cliente</h3><canvas id="cCliIng" height="120"></canvas></div>
+  <div class="cc"><h3><em>🗺️</em> Viajes por Fuente de Agua</h3><canvas id="cOrigen" height="180"></canvas></div>
+</div>
+<div class="full cc"><h3><em>💰</em> Ingresos por Fuente de Agua ($)</h3><canvas id="cOrigIng" height="60"></canvas></div></div>
+<div class="section-wrap" id="sec-egresos"><div class="sec">📤 Egresos</div><div class="g2">
+  <div class="cc"><h3><em>📂</em> Egresos por Tipo</h3><canvas id="cEgTipo" height="180"></canvas></div>
+  <div class="cc"><h3><em>🏢</em> Top Destinatarios</h3><canvas id="cEgEmp" height="180"></canvas></div>
+</div></div>
+<div class="section-wrap" id="sec-facturas"><div class="sec">📋 Facturas Pendientes</div><div class="tc">
+  <h3><em>⚠️</em> Cuentas por Cobrar <span style="margin-left:auto;font-size:11px;color:#f87171;font-weight:normal" id="pend-total"></span></h3>
+  <table><thead><tr><th>Cliente</th><th>No. Factura</th><th>Detalle</th><th>Emisión</th><th>Monto</th><th>Estado</th></tr></thead><tbody id="tPend"></tbody></table>
+</div></div>
+<div class="section-wrap" id="sec-tablas"><div class="sec">🔍 Detalle</div><div class="g2">
+  <div class="tc" style="margin:0"><h3><em>📋</em> Últimos Gastos</h3>
+    <table><thead><tr><th>Fecha</th><th>Tipo</th><th>Concepto</th><th>Valor</th></tr></thead><tbody id="tEg"></tbody></table></div>
+  <div class="tc" style="margin:0"><h3><em>🔧</em> Mantenimiento</h3>
+    <table><thead><tr><th>Fecha</th><th>Tipo</th><th>Item</th><th>Km</th><th>Costo</th></tr></thead><tbody id="tMant"></tbody></table></div>
+</div></div>
+</div>
+<div class="saved-toast" id="toast">✓ Configuración guardada</div>
+<script>
+const D={"meses": ["2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06"], "meses_short": ["05/25", "06/25", "07/25", "08/25", "09/25", "10/25", "11/25", "12/25", "01/26", "02/26", "03/26", "04/26", "05/26", "06/26"], "ingresos": [560.0, 6320.0, 5760.0, 4160.0, 6589.45, 7224.2, 7270.7, 6520.0, 5120.0, 4920.0, 5760.0, 5600.0, 6000.0, 3960.0], "viajes": [14, 158, 144, 104, 162, 170, 180, 163, 128, 123, 144, 140, 150, 99], "cubicaje": [210.0, 2370.0, 2160.0, 1500.0, 2430.0, 2550.0, 2700.0, 2445.0, 1920.0, 1845.0, 2160.0, 2100.0, 2250.0, 1485.0], "egresos": [1921.22, 1764.72, 2747.5, 5969.78, 2580.74, 4909.03, 4022.98, 5374.61, 7113.81, 2071.08, 7443.02, 4203.84, 8992.8, 1706.01], "balance": [-1361.22, 4555.28, 3012.5, -1809.78, 4008.71, 2315.17, 3247.72, 1145.39, -1993.81, 2848.92, -1683.02, 1396.16, -2992.8, 2253.99], "km": [0, 2620, 2309, 1576, 3161, 3161, 3382, 2899, 2509, 2517, 3008, 3349, 2766, 795], "galones": [39.0, 267.6, 242.1, 157.1, 280.5, 288.2, 166.0, 277.6, 235.9, 243.3, 292.1, 320.1, 278.1, 83.1], "comb_costo": [70.0, 480.96, 434.99, 283.11, 662.02, 807.0, 464.8, 772.25, 644.02, 658.41, 815.81, 932.39, 845.0, 258.0], "eg_tipos": ["MANTENIMIENTO", "OPERATIVO", "ADMINISTRATIVO"], "eg_tipo_vals": [2766.96, 36525.55, 21528.63], "orig_labels": ["EUGENIO MACIAS", "ARROYO", "JOCAY", "TOMA PATRON", "JARAMIJO", "AQUAHER", "HOLCIM TOMA", "SIN ORIGEN", "PARAISO", "ROCAFUERTE", "WALTER PRESCAFE", "DON HUGO"], "orig_viajes": [1230, 379, 206, 31, 11, 9, 5, 3, 2, 1, 1, 1], "orig_ing": [49200.0, 15160.0, 8240.0, 1240.0, 440.0, 964.35, 200.0, 120.0, 80.0, 40.0, 40.0, 40.0], "cli_labels": ["PRODMAZUL", "UNACEM", "ALKRISTO", "ORO VERDE", "EUGENIO MACIAS 1 DE ABRIL Y 4 DE MAYO", "VIAJE A SANTA MARIANITA", "VIAJE CENTRO MANTA", "SALVADOR JARAMILLO", "CARLOS MORAN (VIAJE NO AUTORIZADO)", "SAN MARINO", "1 VIAJE ARTESANOS"], "cli_ing": [71004.35, 8892.0, 1880.0, 141.0, 125.0, 65.0, 55.0, 50.0, 50.0, 47.0, 30.0], "eg_emp_labels": ["ROBINSON ROSERO", "EUGENIO MACIAS", "CARLOS MORAN", "XAVIER MACIAS ORTEGA", "AGUA JOCAY", "ARROYO", "EL ARROYO AGUA", "LM  LUBRICANTES"], "eg_emp_vals": [13258.85, 12204.86, 9871.32, 5912.88, 2571.0, 2060.0, 1820.0, 1412.0], "totales": {"ingresos": 75764.35, "egresos": 60821.14, "viajes": 1879, "cubicaje": 28125.0, "km": 34052, "galones": 3170.7, "balance": 14943.21, "fact_pend": 10, "fact_pend_monto": 20616.0}, "fact_pend": [{"cliente": "PRODMAZUL", "nfac": "001-001-000002107", "detalle": "27 de febrero al 29 de marzo de 2026", "fecha_emision": "2026-03-30", "monto_total": 5680.0, "cancelo": "NO", "fecha_pago": null, "dias_mora": null}, {"cliente": "UNACEM", "nfac": "001-001-000002155", "detalle": "01 al 31 de marzo de 2026", "fecha_emision": "2026-04-18", "monto_total": 819.0, "cancelo": "NO", "fecha_pago": null, "dias_mora": null}, {"cliente": "PRODMAZUL", "nfac": "001-001-000002181", "detalle": "30 de marzo al 28 de abril de 2026", "fecha_emision": "2026-04-29", "monto_total": 5760.0, "cancelo": "NO", "fecha_pago": null, "dias_mora": null}, {"cliente": "ALKRISTO", "nfac": "001-001-000002212", "detalle": "01 al 30 de abril de 2026", "fecha_emision": "2026-05-06", "monto_total": 720.0, "cancelo": "NO", "fecha_pago": null, "dias_mora": null}, {"cliente": "UNACEM", "nfac": "001-001-000002260", "detalle": "01 al 30 de abril de 2026", "fecha_emision": "2026-05-22", "monto_total": 1404.0, "cancelo": "NO", "fecha_pago": null, "dias_mora": null}, {"cliente": "UNACEM", "nfac": "001-001-000002267", "detalle": "01 al 15 de mayo de 2026", "fecha_emision": "2026-05-26", "monto_total": 468.0, "cancelo": "NO", "fecha_pago": null, "dias_mora": null}, {"cliente": "EUGENIO MACIAS 1 DE ABRIL Y 4 DE MAYO", "nfac": "N.A.", "detalle": "5 VIAJES", "fecha_emision": "", "monto_total": 125.0, "cancelo": "NO", "fecha_pago": null, "dias_mora": null}, {"cliente": "KAXAMM", "nfac": "N.A.", "detalle": "", "fecha_emision": "", "monto_total": 0.0, "cancelo": "NO", "fecha_pago": null, "dias_mora": null}, {"cliente": "PRODMAZUL", "nfac": "001-001-000002278", "detalle": "29 de abril al 28 de mayo de 2026", "fecha_emision": "2026-05-29", "monto_total": 5640.0, "cancelo": "NO", "fecha_pago": null, "dias_mora": null}, {"cliente": "ALKRISTO", "nfac": "N.A.", "detalle": "", "fecha_emision": "", "monto_total": 0.0, "cancelo": "NO", "fecha_pago": null, "dias_mora": null}], "facturas": [{"cliente": "PRODMAZUL", "nfac": "001-001-000002278", "detalle": "29 de abril al 28 de mayo de 2026", "fecha_emision": "2026-05-29", "monto_total": 5640.0, "cancelo": "NO", "fecha_pago": null, "dias_mora": null}, {"cliente": "UNACEM", "nfac": "001-001-000002267", "detalle": "01 al 15 de mayo de 2026", "fecha_emision": "2026-05-26", "monto_total": 468.0, "cancelo": "NO", "fecha_pago": null, "dias_mora": null}, {"cliente": "UNACEM", "nfac": "001-001-000002260", "detalle": "01 al 30 de abril de 2026", "fecha_emision": "2026-05-22", "monto_total": 1404.0, "cancelo": "NO", "fecha_pago": null, "dias_mora": null}, {"cliente": "ALKRISTO", "nfac": "001-001-000002212", "detalle": "01 al 30 de abril de 2026", "fecha_emision": "2026-05-06", "monto_total": 720.0, "cancelo": "NO", "fecha_pago": null, "dias_mora": null}, {"cliente": "PRODMAZUL", "nfac": "001-001-000002181", "detalle": "30 de marzo al 28 de abril de 2026", "fecha_emision": "2026-04-29", "monto_total": 5760.0, "cancelo": "NO", "fecha_pago": null, "dias_mora": null}, {"cliente": "VIAJE CENTRO MANTA", "nfac": "N.A.", "detalle": "", "fecha_emision": "2026-04-22", "monto_total": 55.0, "cancelo": "SI", "fecha_pago": "2026-04-22", "dias_mora": 0}, {"cliente": "VIAJE A SANTA MARIANITA", "nfac": "N.A.", "detalle": "", "fecha_emision": "2026-04-21", "monto_total": 65.0, "cancelo": "SI", "fecha_pago": "2026-04-21", "dias_mora": 0}, {"cliente": "UNACEM", "nfac": "001-001-000002155", "detalle": "01 al 31 de marzo de 2026", "fecha_emision": "2026-04-18", "monto_total": 819.0, "cancelo": "NO", "fecha_pago": null, "dias_mora": null}, {"cliente": "ALKRISTO", "nfac": "001-001-000002113", "detalle": "03 al 31 de marzo de 2026", "fecha_emision": "2026-04-01", "monto_total": 1160.0, "cancelo": "SI", "fecha_pago": "2026-04-17", "dias_mora": -14}, {"cliente": "PRODMAZUL", "nfac": "001-001-000002107", "detalle": "27 de febrero al 29 de marzo de 2026", "fecha_emision": "2026-03-30", "monto_total": 5680.0, "cancelo": "NO", "fecha_pago": null, "dias_mora": null}, {"cliente": "ORO VERDE", "nfac": "001-001-000002061", "detalle": "2 VIAJES DE AGUA", "fecha_emision": "2026-03-13", "monto_total": 141.0, "cancelo": "SI", "fecha_pago": "2026-04-17", "dias_mora": 5}, {"cliente": "SAN MARINO", "nfac": "001-001-000002062", "detalle": "1 VIAJE DE AGUA", "fecha_emision": "2026-03-13", "monto_total": 47.0, "cancelo": "SI", "fecha_pago": "2026-04-17", "dias_mora": 5}, {"cliente": "UNACEM", "nfac": "001-001-000002027", "detalle": "01 al 28 de febrero 2026", "fecha_emision": "2026-03-03", "monto_total": 994.5, "cancelo": "SI", "fecha_pago": "2026-04-07", "dias_mora": 5}, {"cliente": "PRODMAZUL", "nfac": "001-001-000002014", "detalle": "30 de enero al 26 de febrero de 2026", "fecha_emision": "2026-02-27", "monto_total": 4840.0, "cancelo": "SI", "fecha_pago": "2026-04-27", "dias_mora": 29}, {"cliente": "UNACEM", "nfac": "001-001-000001961", "detalle": "01 al 31 de enero 2026", "fecha_emision": "2026-02-05", "monto_total": 1696.5, "cancelo": "SI", "fecha_pago": "2026-03-16", "dias_mora": 9}, {"cliente": "PRODMAZUL", "nfac": "001-001-000001940", "detalle": "29 de diciembre al 29 de enero 2026", "fecha_emision": "2026-01-30", "monto_total": 4840.0, "cancelo": "SI", "fecha_pago": "2026-04-27", "dias_mora": 57}, {"cliente": "UNACEM", "nfac": "001-001-000001890", "detalle": "01 al 31 de diciembre 2025", "fecha_emision": "2026-01-08", "monto_total": 1345.5, "cancelo": "SI", "fecha_pago": "2026-02-18", "dias_mora": 11}, {"cliente": "PRODMAZUL", "nfac": "001-001-000001837", "detalle": "26 de noviembre al 28 de diciembre 2025", "fecha_emision": "2025-12-29", "monto_total": 7560.0, "cancelo": "SI", "fecha_pago": "2026-03-05", "dias_mora": 36}, {"cliente": "UNACEM", "nfac": "001-001-000001808", "detalle": "01 al 30 de noviembre 2025", "fecha_emision": "2025-12-19", "monto_total": 1053.0, "cancelo": "SI", "fecha_pago": "2026-01-28", "dias_mora": 10}, {"cliente": "PRODMAZUL", "nfac": "001-001-000001687", "detalle": "24 de octubre hasta el 25 de noviembre 2025", "fecha_emision": "2025-11-26", "monto_total": 8252.1, "cancelo": "SI", "fecha_pago": "2026-01-09", "dias_mora": 14}, {"cliente": "UNACEM", "nfac": "001-001-000001661", "detalle": "01 al 31 de octubre 2025", "fecha_emision": "2025-11-19", "monto_total": 234.0, "cancelo": "SI", "fecha_pago": "2025-12-23", "dias_mora": 4}, {"cliente": "UNACEM", "nfac": "001-001-000001616", "detalle": "13 al 29 de septiembre 2025", "fecha_emision": "2025-11-06", "monto_total": 877.5, "cancelo": "SI", "fecha_pago": "2025-12-15", "dias_mora": 9}, {"cliente": "PRODMAZUL", "nfac": "001-001-000001594", "detalle": "26 de septiembre hasta el 23 de octubre 2025", "fecha_emision": "2025-10-24", "monto_total": 5962.8, "cancelo": "SI", "fecha_pago": "2025-12-03", "dias_mora": 10}, {"cliente": "PRODMAZUL", "nfac": "001-001-000001525", "detalle": "26 de agosto hasta el 25 de septiembre 2025", "fecha_emision": "2025-09-26", "monto_total": 6549.45, "cancelo": "SI", "fecha_pago": "2025-11-18", "dias_mora": 23}, {"cliente": "PRODMAZUL", "nfac": "001-001-000001426", "detalle": "25 de julio hasta el 25 de agosto 2025", "fecha_emision": "2025-08-27", "monto_total": 4600.0, "cancelo": "SI", "fecha_pago": "2025-10-24", "dias_mora": 28}], "mantenimientos": [{"fecha": "2025-07-18", "tipo": "PREVENTIVO", "odometro": null, "item": "LUBRICANTE", "descripcion": "ACEITE MOTOR SAE 15W40", "precio_total": 32.0}, {"fecha": "2025-07-18", "tipo": "PREVENTIVO", "odometro": null, "item": "LUBRICANTE", "descripcion": "ACEITE HIDRAULICO ATF SAE", "precio_total": 6.0}, {"fecha": "2025-07-03", "tipo": "CORRECTIVO", "odometro": null, "item": "PAQUETES DE RESORTE", "descripcion": "REPUESTOS 2 HOJAS MADRE PAQUETES DELANTEROS", "precio_total": 170.0}, {"fecha": "2025-06-14", "tipo": "RUTINARIO", "odometro": 90747, "item": "REFRIGERANTE MOTOR", "descripcion": "REFRIGERANTE ANTIFREEZE+COOLANT 50/50 AF850", "precio_total": 14.0}, {"fecha": "2025-06-14", "tipo": "PREVENTIVO", "odometro": null, "item": "PROTECTOR SILICONA", "descripcion": "PROTECTOR UV-3 SILICONA", "precio_total": 5.0}, {"fecha": "2025-06-14", "tipo": "RUTINARIO", "odometro": 90747, "item": "FILTRO COMBUSTIBLE", "descripcion": "SFP586F SAMURY FUEL ROSCA", "precio_total": 5.0}, {"fecha": "2025-06-14", "tipo": "RUTINARIO", "odometro": 90747, "item": "FILTRO SEPARADOR AGUA COMBUSTIBLE", "descripcion": "P552071 DONALDSON WATER SEPARADOR", "precio_total": 15.0}, {"fecha": "2025-06-14", "tipo": "RUTINARIO", "odometro": 90747, "item": "FILTRO COMBUSTIBLE", "descripcion": "MF1280 MPF MOTOREX FUEL FILTER", "precio_total": 9.0}, {"fecha": "2025-06-14", "tipo": "RUTINARIO", "odometro": 90747, "item": "FILTRO SEPARADOR AGUA COMBUSTIBLE", "descripcion": "AFS127/1 ADVANCE FUEL SEPARADOR AGUA", "precio_total": 10.0}, {"fecha": "2025-06-14", "tipo": "RUTINARIO", "odometro": 90747, "item": "FILTRO ACEITE", "descripcion": "MO30000 MPF MOTOREX F ACEITE", "precio_total": 17.0}, {"fecha": "2025-06-14", "tipo": "RUTINARIO", "odometro": 90747, "item": "LUBRICANTE", "descripcion": "ACEITE MOTOR SAE 15W40", "precio_total": 35.0}, {"fecha": "2025-06-14", "tipo": "RUTINARIO", "odometro": 90747, "item": "LUBRICANTE", "descripcion": "ACEITE MOTOR SAE 15W40", "precio_total": 130.0}], "egresos_recientes": [{"fecha": "2026-06-06", "tipo": "OPERATIVO", "empresa": "ENZO PASTORE", "concepto": "COMBUSTIBLE HASTA EL 04 DE JUNIO", "valor": 606.01}, {"fecha": "2026-06-06", "tipo": "OPERATIVO", "empresa": "EUGENIO MACIAS", "concepto": "PRIMERA QUINCENA MAYO", "valor": 570.0}, {"fecha": "2026-06-05", "tipo": "OPERATIVO", "empresa": "ARROYO", "concepto": "6 VIAJES DE AGUA", "valor": 60.0}, {"fecha": "2026-06-05", "tipo": "OPERATIVO", "empresa": "BONOS", "concepto": "CARLOS CORRALES", "valor": 6.0}, {"fecha": "2026-06-05", "tipo": "MANTENIMIENTO", "empresa": "AGREDO CAROLINA", "concepto": "FRENOS DE AIRE, ARREGLO PEDAL", "valor": 75.0}, {"fecha": "2026-06-05", "tipo": "MANTENIMIENTO", "empresa": "GILER MICHELLE", "concepto": "LAVADA DEL CARRO", "valor": 12.0}, {"fecha": "2026-06-05", "tipo": "MANTENIMIENTO", "empresa": "MOREIRA IVALDI", "concepto": "ENGRASADA DEL CARRO", "valor": 10.0}, {"fecha": "2026-06-05", "tipo": "OPERATIVO", "empresa": "PARAISO", "concepto": "2 VIAJES Y MEDIO AGUA CRUDA SALOBRE", "valor": 17.0}, {"fecha": "2026-06-04", "tipo": "OPERATIVO", "empresa": "CARLOS MORAN", "concepto": "CAJA CHICA", "valor": 20.0}, {"fecha": "2026-06-03", "tipo": "OPERATIVO", "empresa": "CARLOS MORAN", "concepto": "ABONO TRABAJOS MAYO", "valor": 300.0}, {"fecha": "2026-06-02", "tipo": "OPERATIVO", "empresa": "JOCAY", "concepto": "3 VIAJES", "valor": 30.0}, {"fecha": "2026-05-31", "tipo": "MANTENIMIENTO", "empresa": "MACIAS GARCIA JAIME", "concepto": "ACEITE MOTOR SAE 40", "valor": 15.0}, {"fecha": "2026-05-31", "tipo": "OPERATIVO", "empresa": "TOMA HOLCIM", "concepto": "2 VIAJES", "valor": 20.0}, {"fecha": "2026-05-29", "tipo": "OPERATIVO", "empresa": "JOCAY", "concepto": "4 VIAJES", "valor": 40.0}, {"fecha": "2026-05-28", "tipo": "OPERATIVO", "empresa": "TOMA HOLCIM", "concepto": "3 VIAJES", "valor": 30.0}], "update_time": "22/06/2026 18:17"};
+const fmt=n=>'$'+Number(n).toLocaleString('es-EC',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtN=n=>Number(n).toLocaleString('es-EC');
+const COLORS=['#3b82f6','#10b981','#f59e0b','#8b5cf6','#ef4444','#06b6d4','#f97316','#ec4899'];
+const SECTIONS=[
+  {id:'sec-kpis',label:'KPI Cards',sub:'Tarjetas con métricas',def:true},
+  {id:'sec-ingeg',label:'Ingresos vs Egresos',sub:'Gráfico comparativo',def:true},
+  {id:'sec-ops',label:'Operaciones',sub:'Viajes, KM y balance',def:true},
+  {id:'sec-comb',label:'Combustible',sub:'Galones y costo',def:true},
+  {id:'sec-clientes',label:'Clientes y Fuentes',sub:'Ingresos por cliente',def:true},
+  {id:'sec-egresos',label:'Egresos',sub:'Por tipo y empresa',def:true},
+  {id:'sec-facturas',label:'Facturas Pendientes',sub:'Cuentas por cobrar',def:true},
+  {id:'sec-tablas',label:'Tablas de Detalle',sub:'Gastos y mantenimiento',def:true},
+];
+const CHART_TYPES=[
+  {id:'cIngEg',label:'Ingresos vs Egresos',types:['bar','line']},
+  {id:'cViajes',label:'Viajes por Mes',types:['line','bar']},
+  {id:'cKm',label:'KM Recorridos',types:['line','bar']},
+  {id:'cBalance',label:'Balance Mensual',types:['bar','line']},
+  {id:'cGal',label:'Galones Diesel',types:['bar','line']},
+  {id:'cCombCosto',label:'Costo Combustible',types:['bar','line']},
+];
+const KPIS=[
+  {id:'kpi-ingresos',label:'Ingresos Viajes',def:true},
+  {id:'kpi-egresos',label:'Egresos',def:true},
+  {id:'kpi-balance',label:'Balance Neto',def:true},
+  {id:'kpi-km',label:'KM Recorridos',def:true},
+  {id:'kpi-diesel',label:'Diesel',def:true},
+  {id:'kpi-viajes',label:'Viajes',def:true},
+  {id:'kpi-cxc',label:'Cuentas por Cobrar',def:true},
+];
+const THEMES={blue:{accent:'#1d4ed8',accent2:'#3b82f6'},green:{accent:'#059669',accent2:'#10b981'},purple:{accent:'#7c3aed',accent2:'#8b5cf6'},red:{accent:'#dc2626',accent2:'#ef4444'},cyan:{accent:'#0891b2',accent2:'#06b6d4'}};
+function defCfg(){const c={sections:{},chartTypes:{},kpis:{},theme:'blue'};SECTIONS.forEach(s=>c.sections[s.id]=s.def);CHART_TYPES.forEach(ct=>c.chartTypes[ct.id]=ct.types[0]);KPIS.forEach(k=>c.kpis[k.id]=k.def);return c;}
+function loadCfg(){try{const s=localStorage.getItem('hnpro_cfg');return s?JSON.parse(s):defCfg();}catch(e){return defCfg();}}
+function saveCfg(){localStorage.setItem('hnpro_cfg',JSON.stringify(cfg));showToast();}
+function showToast(){const t=document.getElementById('toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000);}
+let cfg=loadCfg();
+function buildPanel(){
+  document.getElementById('section-toggles').innerHTML=SECTIONS.map(s=>`<div class="toggle-row"><div class="toggle-info"><div class="toggle-label">${s.label}</div><div class="toggle-sub">${s.sub}</div></div><label class="switch"><input type="checkbox" ${cfg.sections[s.id]?'checked':''} onchange="toggleSec('${s.id}',this.checked)"><span class="slider"></span></label></div>`).join('');
+  document.getElementById('chart-type-rows').innerHTML=CHART_TYPES.map(ct=>`<div class="toggle-row"><div class="toggle-info"><div class="toggle-label">${ct.label}</div></div><div class="toggle-right"><select class="ctype-sel" onchange="setChartType('${ct.id}',this.value)">${ct.types.map(t=>`<option value="${t}" ${cfg.chartTypes[ct.id]===t?'selected':''}>
+  ${t==='bar'?'📊 Barras':'📈 Línea'}</option>`).join('')}</select></div></div>`).join('');
+  document.getElementById('kpi-toggles').innerHTML=KPIS.map(k=>`<div class="toggle-row"><div class="toggle-info"><div class="toggle-label">${k.label}</div></div><label class="switch"><input type="checkbox" ${cfg.kpis[k.id]?'checked':''} onchange="toggleKpi('${k.id}',this.checked)"><span class="slider"></span></label></div>`).join('');
+  document.querySelectorAll('.theme-btn').forEach(b=>b.classList.toggle('selected',b.dataset.theme===cfg.theme));
+}
+function toggleSec(id,v){cfg.sections[id]=v;document.getElementById(id).classList.toggle('hidden-section',!v);saveCfg();}
+function setChartType(id,t){cfg.chartTypes[id]=t;saveCfg();drawChart(id);}
+function toggleKpi(id,v){cfg.kpis[id]=v;const e=document.getElementById(id);if(e)e.style.display=v?'':'none';saveCfg();}
+function setTheme(t,btn){cfg.theme=t;document.querySelectorAll('.theme-btn').forEach(b=>b.classList.remove('selected'));btn.classList.add('selected');applyTheme();saveCfg();}
+function applyTheme(){const t=THEMES[cfg.theme]||THEMES.blue;document.documentElement.style.setProperty('--accent',t.accent);document.documentElement.style.setProperty('--accent2',t.accent2);}
+function resetConfig(){cfg=defCfg();localStorage.removeItem('hnpro_cfg');buildPanel();applyCfg();updateCharts();showToast();}
+function applyCfg(){SECTIONS.forEach(s=>{const e=document.getElementById(s.id);if(e)e.classList.toggle('hidden-section',!cfg.sections[s.id]);});KPIS.forEach(k=>{const e=document.getElementById(k.id);if(e)e.style.display=cfg.kpis[k.id]?'':'none;});applyTheme();}
+function openPanel(){document.getElementById('cpanel').classList.add('open');document.getElementById('overlay').classList.add('open');}
+function closePanel(){document.getElementById('cpanel').classList.remove('open');document.getElementById('overlay').classList.remove('open');}
+let filter='all';
+function mask(){return D.meses.map(m=>filter==='all'?true:filter.length===4?m.startsWith(filter):m===filter);}
+function fa(a){const m=mask();return a.filter((_,i)=>m[i]);}
+function fms(){return D.meses_short.filter((_,i)=>mask()[i]);}
+function sum(a){return a.reduce((x,y)=>x+y,0);}
+function setF(f,btn){filter=f;document.querySelectorAll('.fb').forEach(b=>b.classList.remove('act'));if(btn)btn.classList.add('act');const l={'all':'Todos los períodos','2025':'Año 2025','2026':'Año 2026'};document.getElementById('periodLabel').textContent=l[f]||f;updateKpis();updateCharts();}
+function updateKpis(){
+  const ing=sum(fa(D.ingresos)),eg=sum(fa(D.egresos)),vj=sum(fa(D.viajes)),cub=sum(fa(D.cubicaje)),km=sum(fa(D.km)),gal=sum(fa(D.galones)),bal=ing-eg;
+  document.getElementById('k-ing').textContent=fmt(ing);document.getElementById('k-ing-s').textContent=fmtN(vj)+' viajes realizados';
+  document.getElementById('k-eg').textContent=fmt(eg);
+  const bel=document.getElementById('k-bal');bel.textContent=fmt(bal);bel.className='kval '+(bal>=0?'gr':'rd');
+  document.getElementById('k-km').textContent=fmtN(km)+' km';document.getElementById('k-gal').textContent=gal.toFixed(1)+' gal';
+  document.getElementById('k-gal-s').textContent=fmt(sum(fa(D.comb_costo)))+' en combustible';
+  document.getElementById('k-vj').textContent=fmtN(vj);document.getElementById('k-vj-s').textContent=fmtN(Math.round(cub))+' m³ transportados';
+  document.getElementById('k-cxc').textContent=fmt(D.totales.fact_pend_monto);document.getElementById('k-cxc-s').textContent=D.totales.fact_pend+' facturas sin cobrar';
+}
+const charts={};const gridC={color:'#0d1b30'},tickC={color:'#334155',font:{size:10}};
+function gt(id){return cfg.chartTypes[id]||'bar';}
+function mkChart(id,labels,datasets,opts={}){
+  const ctx=document.getElementById(id);if(!ctx)return;
+  if(charts[id])charts[id].destroy();
+  charts[id]=new Chart(ctx.getContext('2d'),{type:opts.hbar?'bar':opts.doughnut?'doughnut':gt(id),data:{labels,datasets},options:{indexAxis:opts.hbar?'y':undefined,responsive:true,animation:{duration:350},cutout:opts.doughnut?'62%':undefined,plugins:{legend:{display:opts.doughnut||opts.legend||false,position:'bottom',labels:{color:'#64748b',font:{size:10},padding:8,boxWidth:12}}},scales:opts.doughnut?{}:{x:{ticks:{...tickC,...(opts.hbar?{callback:v=>'$'+v.toLocaleString()}:{})},grid:gridC},y:{ticks:{...tickC,...(opts.yticks||{})},grid:{color:'#12213a'}}}}});
+}
+function drawChart(id){
+  const ms=fms(),ing=fa(D.ingresos),eg=fa(D.egresos),vj=fa(D.viajes),km=fa(D.km),gal=fa(D.galones),cb=fa(D.comb_costo),bal=fa(D.balance);
+  const mk=(c,d,l)=>{return {label:l,data:d,borderColor:c,backgroundColor:gt(id)==='line'?c+'22':c+'bb',fill:gt(id)==='line',tension:.4,pointRadius:4,pointBackgroundColor:c,borderWidth:1,borderRadius:gt(id)==='bar'?4:0};};
+  if(id==='cIngEg')mkChart(id,ms,[mk('#34d399',ing,'Ingresos'),mk('#f87171',eg,'Egresos')],{legend:true,yticks:{callback:v=>'$'+v.toLocaleString()}});
+  if(id==='cViajes')mkChart(id,ms,[mk('#60a5fa',vj,'Viajes')],{});
+  if(id==='cKm')mkChart(id,ms,[mk('#22d3ee',km,'KM')],{yticks:{callback:v=>v+' km'}});
+  if(id==='cBalance')mkChart(id,ms,[{label:'Balance',data:bal,backgroundColor:bal.map(v=>v>=0?'rgba(52,211,153,.8)':'rgba(248,113,113,.8)'),borderColor:bal.map(v=>v>=0?'#34d399':'#f87171'),borderWidth:1,borderRadius:4}],{yticks:{callback:v=>'$'+v.toLocaleString()}});
+  if(id==='cGal')mkChart(id,ms,[mk('#fbbf24',gal,'Galones')],{yticks:{callback:v=>v+' gal'}});
+  if(id==='cCombCosto')mkChart(id,ms,[mk('#f97316',cb,'Costo $')],{yticks:{callback:v=>'$'+v}});
+  if(id==='cCliIng')mkChart(id,D.cli_labels,[{data:D.cli_ing,backgroundColor:COLORS,borderWidth:0,borderRadius:4}],{hbar:true});
+  if(id==='cOrigen')mkChart(id,D.orig_labels,[{data:D.orig_viajes,backgroundColor:COLORS,borderColor:'#08111f',borderWidth:2}],{doughnut:true});
+  if(id==='cOrigIng')mkChart(id,D.orig_labels,[{data:D.orig_ing,backgroundColor:COLORS,borderWidth:0,borderRadius:4}],{hbar:true});
+  if(id==='cEgTipo')mkChart(id,D.eg_tipos,[{data:D.eg_tipo_vals,backgroundColor:COLORS,borderColor:'#08111f',borderWidth:2}],{doughnut:true});
+  if(id==='cEgEmp')mkChart(id,D.eg_emp_labels,[{data:D.eg_emp_vals,backgroundColor:COLORS,borderWidth:0,borderRadius:4}],{hbar:true});
+}
+function updateCharts(){['cIngEg','cViajes','cKm','cBalance','cGal','cCombCosto','cCliIng','cOrigen','cOrigIng','cEgTipo','cEgEmp'].forEach(drawChart);}
+function updateTables(){
+  document.getElementById('pend-total').textContent='Total: '+fmt(D.fact_pend.reduce((a,b)=>a+b.monto_total,0));
+  document.getElementById('tPend').innerHTML=D.fact_pend.map(f=>`<tr><td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${f.cliente}">${f.cliente}</td><td style="font-size:10px;color:#475569">${f.nfac}</td><td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px">${f.detalle}</td><td>${f.fecha_emision}</td><td style="color:#f87171;font-weight:700">${fmt(f.monto_total)}</td><td><span class="bd brd">SIN PAGO</span></td></tr>`).join('');
+  document.getElementById('tEg').innerHTML=D.egresos_recientes.slice(0,12).map(e=>{const bc=e.tipo==='OPERATIVO'?'bbl':e.tipo==='MANTENIMIENTO'?'byl':'bgr';return`<tr><td>${e.fecha}</td><td><span class="bd ${bc}">${e.tipo}</span></td><td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(e.empresa||e.concepto||'').slice(0,30)}</td><td style="color:#f87171;font-weight:700">${fmt(e.valor)}</td></tr>`;}).join('');
+  document.getElementById('tMant').innerHTML=D.mantenimientos.map(m=>{const bc=m.tipo==='RUTINARIO'?'bgr':m.tipo==='PREVENTIVO'?'bbl':m.tipo==='CORRECTIVO'?'brd':'byl';return`<tr><td>${m.fecha}</td><td><span class="bd ${bc}">${m.tipo||'—'}</span></td><td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.item||'—'}</td><td style="color:#94a3b8">${m.odometro?fmtN(m.odometro)+' km':'—'}</td><td style="color:#fbbf24;font-weight:700">${fmt(m.precio_total)}</td></tr>`;}).join('');
+}
+buildPanel();applyCfg();updateKpis();updateCharts();updateTables();
+</script>
+</body></html>
